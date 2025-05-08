@@ -5,3 +5,7 @@ edition = "2021"
 
 [dependencies]
 x11rb = { version = "0.13.1" }
+
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+lto = true
