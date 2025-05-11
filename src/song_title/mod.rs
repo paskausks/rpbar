@@ -8,7 +8,7 @@ use x11rb::rust_connection::RustConnection;
 use crate::plugin::{Markup, Plugin, Status};
 
 const PLUGIN_NAME: &str = "song_name";
-const FRAMES: [char; 4] = ['|', '/', '-', '\\'];
+const FRAMES: [char; 4] = ['|', '/', '—', '\\'];
 
 pub struct SongTitlePlugin {
     x11_connection: Option<RustConnection>,
