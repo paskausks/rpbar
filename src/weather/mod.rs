@@ -88,7 +88,7 @@ impl Plugin for WeatherPlugin {
 
         let res = self.last_response.as_ref().unwrap();
 
-        let text = format!("{} C° ({})", res.temperature, res.summary);
+        let text = format!("{} °C ({})", res.temperature, res.summary);
 
         Some(Status {
             name: PLUGIN_NAME,
