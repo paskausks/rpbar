@@ -44,16 +44,18 @@ fn main() {
             clean_buffer = &clean_buffer[1..];
         }
 
-        process_i3status(&clean_buffer, had_prefix, &plugins);
+        process_i3status(&clean_buffer, had_prefix, &mut plugins);
 
         buffer.clear();
     }
 }
 
-fn process_i3status(buffer: &str, had_prefix: bool, plugins: &PluginVec) {
+fn process_i3status(buffer: &str, had_prefix: bool, plugins: &mut PluginVec) {
     let mut plugin_json: Vec<String> = Vec::with_capacity(plugins.len());
 
-    for plugin in plugins.iter() {
+    for plugin in plugins.iter_mut() {
+        plugin.update();
+
         let status = plugin.get_status();
 
         if status.is_none() {

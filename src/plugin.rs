@@ -26,8 +26,8 @@ impl<'a> Status<'a> {
         return format!(
             "{{\"name\": \"{}\",\"full_text\": \"{}\",\"short_text\":\"{}\",\"markup\": \"{}\"}}",
             self.name,
-            self.full_text.replace("\"", "\\\""),
-            self.short_text.replace("\"", "\\\""),
+            self.full_text.replace("\\", "\\\\").replace("\"", "\\\""),
+            self.short_text.replace("\\", "\\\\").replace("\"", "\\\""),
             self.markup,
         );
     }
@@ -35,5 +35,6 @@ impl<'a> Status<'a> {
 
 pub trait Plugin {
     fn setup(&mut self);
+    fn update(&mut self);
     fn get_status(&self) -> Option<Status>;
 }

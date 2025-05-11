@@ -8,10 +8,12 @@ use x11rb::rust_connection::RustConnection;
 use crate::plugin::{Markup, Plugin, Status};
 
 const PLUGIN_NAME: &str = "song_name";
+const FRAMES: [char; 4] = ['|', '/', '-', '\\'];
 
 pub struct SongTitlePlugin {
     x11_connection: Option<RustConnection>,
     root_window: u32,
+    spinner_frame: usize,
 }
 
 impl Default for SongTitlePlugin {
@@ -19,6 +21,7 @@ impl Default for SongTitlePlugin {
         let plugin = SongTitlePlugin {
             x11_connection: None,
             root_window: 0,
+            spinner_frame: 0,
         };
         return plugin;
     }
@@ -35,6 +38,13 @@ impl Plugin for SongTitlePlugin {
 
         self.root_window = setup.roots[0].root;
         self.x11_connection = Some(conn);
+    }
+
+    fn update(&mut self) {
+        self.spinner_frame = self.spinner_frame + 1;
+        if self.spinner_frame >= FRAMES.len() {
+            self.spinner_frame = 0;
+        }
     }
 
     fn get_status(&self) -> Option<Status> {
@@ -59,8 +69,8 @@ impl Plugin for SongTitlePlugin {
             return Some(Status {
                 name: PLUGIN_NAME,
                 markup: Markup::Pango,
-                full_text: wrap_in_tags(title),
-                short_text: wrap_in_tags(short_title),
+                full_text: wrap_in_tags(title, FRAMES[self.spinner_frame]),
+                short_text: wrap_in_tags(short_title, FRAMES[self.spinner_frame]),
             });
         }
 
@@ -152,6 +162,6 @@ fn match_title(title: &str, class: &str) -> Option<String> {
     return None;
 }
 
-fn wrap_in_tags(content: String) -> String {
-    format!("🎵 <span foreground=\"#FF9900\" font_weight=\"bold\">{}</span> 🎵", content)
+fn wrap_in_tags(content: String, symbol: char) -> String {
+    format!("🎵 ({}) <span foreground=\"#FF9900\" font_weight=\"bold\">{}</span> ({}) 🎵", symbol, content, symbol)
 }
