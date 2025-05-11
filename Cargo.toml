@@ -1,11 +1,11 @@
 [package]
-name = "song-title"
+name = "rpbar"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-x11rb = { version = "0.13.1" }
+x11rb = "0.13.1"
 
 [profile.release]
-strip = true  # Automatically strip symbols from the binary.
+strip = true
 lto = true

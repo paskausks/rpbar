@@ -1,83 +1,83 @@
-use std::str;
-use x11rb::connection::Connection;
-use x11rb::protocol::xproto::{get_property, intern_atom, query_tree, AtomEnum};
-use x11rb::rust_connection::RustConnection;
-use matchers::*;
+use plugin::Plugin;
+use song_title::SongTitlePlugin;
+use std::io;
 
-pub mod matchers;
+pub mod song_title;
+pub mod plugin;
 
-/// a tuple of a matcher function and a cleaner function
-const MATCHERS: [(fn(&str, &str) -> bool, fn(&str) -> String); 2] = [
-    (supersonic_matcher, supersonic_cleaner),
-    (spotify_matcher, spotify_cleaner),
-];
+type PluginVec = Vec<Box<dyn Plugin>>;
 
 fn main() {
-    let (conn, _screen_num) = x11rb::connect(None).unwrap();
-    let setup = &conn.setup();
+    let mut buffer = String::new();
+    let stdin = io::stdin();
 
-    if setup.roots_len() < 1 {
-        return;
+    let mut plugins: PluginVec = vec![
+        Box::new(SongTitlePlugin::default()),
+    ];
+
+    for plugin in plugins.iter_mut() {
+        plugin.setup();
     }
 
-    let root_window = setup.roots[0].root;
-
-    crawl_titles(&conn, root_window);
-}
-
-fn crawl_titles(conn: &RustConnection, window: u32) {
-    let tree_cookie = query_tree(&conn, window).unwrap();
-    let tree = match tree_cookie.reply() {
-        Ok(t) => t,
-        Err(_) => return,
-    };
-
-    // instead of AtomEnum::WM_NAME which is ASCII
-    // https://specifications.freedesktop.org/wm-spec/1.3/ar01s05.html
-    let net_wm_name_atom = intern_atom(&conn, true, b"_NET_WM_NAME")
-        .unwrap()
-        .reply()
-        .unwrap()
-        .atom;
-
-    // instead of AtomEnum::STRING which is ASCII
-    // https://specifications.freedesktop.org/wm-spec/1.3/ar01s05.html
-    let utf8_string_atom = intern_atom(&conn, true, b"UTF8_STRING")
-        .unwrap()
-        .reply()
-        .unwrap()
-        .atom;
-
-    for child in tree.children {
-        let title_prop = get_property(&conn, false, child, net_wm_name_atom, utf8_string_atom, 0, 1024).unwrap().reply();
-        let class_prop = get_property(&conn, false, child, AtomEnum::WM_CLASS, AtomEnum::STRING, 0, 16).unwrap().reply();
-
-        let title = match title_prop {
-            Ok(r) => r,
-            Err(_) => continue,
+    loop {
+        let bytes = match stdin.read_line(&mut buffer) {
+            Ok(n) => n,
+            Err(_) => 0,
         };
 
-        if title.length > 0 {
-            // class is application name and class separated by \0 (its a XClassHint struct)
-            let class = class_prop.map(|res| res.value).unwrap_or_default();
-            match str::from_utf8(&title.value) {
-                Ok(t) => if match_title(t, str::from_utf8(&class).unwrap_or_default()) {
-                    return;
-                },
-                Err(_) => continue,
-            };
+        if bytes == 0 {
+            continue;
         }
 
-        crawl_titles(&conn, child);
+        if buffer.starts_with("{\"version\":") || buffer.trim() == "[" {
+            // opening headers, just echo them forwards
+            print!("{}", buffer);
+            buffer.clear();
+            continue;
+        }
+
+        // since this is a json stream, we remove a prefixing comma
+        let mut clean_buffer = buffer.trim();
+        let mut had_prefix: bool = false;
+        if clean_buffer.starts_with(",") {
+            had_prefix = true;
+            clean_buffer = &clean_buffer[1..];
+        }
+
+        process_i3status(&clean_buffer, had_prefix, &plugins);
+
+        buffer.clear();
     }
 }
 
-fn match_title(title: &str, class: &str) -> bool {
-    for (match_fn, clean_fn) in MATCHERS {
-        if match_fn(title, class) {
-            print!("{}", clean_fn(title));
-            return true;
+fn process_i3status(buffer: &str, had_prefix: bool, plugins: &PluginVec) {
+    let mut plugin_json: Vec<String> = Vec::with_capacity(plugins.len());
+
+    for plugin in plugins.iter() {
+        let status = plugin.get_status();
+
+        if status.is_none() {
+            continue;
         }
+
+        plugin_json.push(status.unwrap().to_json());
     }
-    return false;
+
+    // insert our plugin json after the opening brace
+    let json: String;
+
+    if plugin_json.len() > 0 {
+        // get the existing json without the opening brace
+        let b = &buffer[1..];
+        json = format!("[{},{}", plugin_json.join(","), b);
+    } else {
+        // no status from plugins, so we pass the buffer untouched
+        json = String::from(buffer);
+    }
+
+    if had_prefix {
+        println!(",{}", json);
+    } else {
+        println!("{}", json);
+    }
 }
