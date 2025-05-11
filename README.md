@@ -4,8 +4,10 @@ A wrapper around [i3status](https://i3wm.org/docs/i3status.html) to allow easy e
 
 ## Features
 
-* show the current playing song - supports Spotify and Supersonic.
-* show the current weather via MeteoSource.
+The bar wrapper will add the following info:
+* the currently playing song - supports Spotify and Supersonic.
+* the current weather via [MeteoSource](https://www.meteosource.com).
+* the current uptime
 
 ## Usage
 

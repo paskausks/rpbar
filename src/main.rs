@@ -1,10 +1,12 @@
 use plugin::Plugin;
 use song_title::SongTitlePlugin;
+use uptime::UptimePlugin;
 use weather::WeatherPlugin;
 use std::io;
 
 pub mod song_title;
 pub mod weather;
+pub mod uptime;
 pub mod plugin;
 
 type PluginVec = Vec<Box<dyn Plugin>>;
@@ -16,6 +18,7 @@ fn main() {
     let mut plugins: PluginVec = vec![
         Box::new(SongTitlePlugin::default()),
         Box::new(WeatherPlugin::default()),
+        Box::new(UptimePlugin {}),
     ];
 
     for plugin in plugins.iter_mut() {
