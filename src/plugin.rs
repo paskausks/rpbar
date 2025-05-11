@@ -17,16 +17,18 @@ impl Display for Markup {
 pub struct Status<'a>{
     pub name: &'a str,
     pub full_text: String,
+    pub short_text: String,
     pub markup: Markup,
 }
 
 impl<'a> Status<'a> {
     pub fn to_json(&self) -> String {
         return format!(
-            "{{\"name\": \"{}\",\"full_text\": \"{}\",\"markup\": \"{}\"}}",
+            "{{\"name\": \"{}\",\"full_text\": \"{}\",\"short_text\":\"{}\",\"markup\": \"{}\"}}",
             self.name,
             self.full_text.replace("\"", "\\\""),
-            self.markup
+            self.short_text.replace("\"", "\\\""),
+            self.markup,
         );
     }
 }

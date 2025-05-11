@@ -47,10 +47,20 @@ impl Plugin for SongTitlePlugin {
 
             let title = title_match.unwrap();
 
+            // for the short title, just use the track title
+            let mut short_title = title.clone();
+            let hyphen_index = short_title.find(" - ");
+
+            if let Some(idx) = hyphen_index {
+                let (head, _) = short_title.split_at(idx);
+                short_title = String::from(head);
+            }
+
             return Some(Status {
                 name: PLUGIN_NAME,
                 markup: Markup::Pango,
-                full_text: format!("🎵 <span foreground=\"#FF9900\" font_weight=\"bold\">{}</span> 🎵", title),
+                full_text: wrap_in_tags(title),
+                short_text: wrap_in_tags(short_title),
             });
         }
 
@@ -140,4 +150,8 @@ fn match_title(title: &str, class: &str) -> Option<String> {
         }
     }
     return None;
+}
+
+fn wrap_in_tags(content: String) -> String {
+    format!("🎵 <span foreground=\"#FF9900\" font_weight=\"bold\">{}</span> 🎵", content)
 }
