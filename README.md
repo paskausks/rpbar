@@ -2,6 +2,8 @@
 
 A wrapper around [i3status](https://i3wm.org/docs/i3status.html) to allow easy extension of i3bar with extra data.
 
+![Screenshot of the bar's additions](screenshot.png)
+
 ## Features
 
 The bar wrapper will add the following info:
