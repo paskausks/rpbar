@@ -1,8 +1,10 @@
 use plugin::Plugin;
 use song_title::SongTitlePlugin;
+use weather::WeatherPlugin;
 use std::io;
 
 pub mod song_title;
+pub mod weather;
 pub mod plugin;
 
 type PluginVec = Vec<Box<dyn Plugin>>;
@@ -13,6 +15,7 @@ fn main() {
 
     let mut plugins: PluginVec = vec![
         Box::new(SongTitlePlugin::default()),
+        Box::new(WeatherPlugin::default()),
     ];
 
     for plugin in plugins.iter_mut() {
@@ -65,13 +68,11 @@ fn process_i3status(buffer: &str, had_prefix: bool, plugins: &mut PluginVec) {
         plugin_json.push(status.unwrap().to_json());
     }
 
-    // insert our plugin json after the opening brace
     let json: String;
 
     if plugin_json.len() > 0 {
         // get the existing json without the opening brace
-        let b = &buffer[1..];
-        json = format!("[{},{}", plugin_json.join(","), b);
+        json = format!("[{},{}", plugin_json.join(","), &buffer[1..]);
     } else {
         // no status from plugins, so we pass the buffer untouched
         json = String::from(buffer);
